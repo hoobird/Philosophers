@@ -20,7 +20,7 @@
 # include <sys/time.h>
 # include <string.h>
 
-typedef struct s_philosettings
+typedef struct	s_philosettings
 {
 	int				id;
 	int				no_philo;
@@ -28,10 +28,16 @@ typedef struct s_philosettings
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				no_must_eat;
-	int				*forks;
-	int				*eat;
-	int				*die;
 	struct timeval	start;
 }				t_philosettings;
+
+typedef struct	s_philosopher
+{
+	int				id;
+	pthread_t		thread;
+	t_philosettings	*settings;
+	struct timeval	last_meal;
+	int				no_eat;
+}				t_philosopher;
 
 #endif

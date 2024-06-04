@@ -72,11 +72,57 @@ int	checkargv(int argc, char **argv)
 	return (0);
 }
 
+int	p_atoi(const char *nptr)
+{
+	char	*temp;
+	int		number;
+
+	number = 0;
+	temp = (char *) nptr;
+	while ((*temp >= 9 && *temp <= 13) || *temp == 32)
+		temp++;
+	while (*temp >= '0' && *temp <= '9')
+	{
+		number = number * 10 + (*temp - '0');
+		temp++;
+	}
+	printf("number: %d\n", number);
+	return (number);
+}
+
+int	setupsettings(t_philosettings *set, int argc, char **argv)
+{
+	set->no_philo = p_atoi(argv[1]);
+	set->time_to_die = p_atoi(argv[2]);
+	set->time_to_eat = p_atoi(argv[3]);
+	set->time_to_sleep = p_atoi(argv[4]);
+	if (argc == 6)
+		set->no_must_eat = p_atoi(argv[5]);
+	else
+		set->no_must_eat = -1;
+	if (set->no_philo == 0 || set->time_to_die == 0 || set->time_to_eat == 0
+		|| set->time_to_sleep == 0 || set->no_must_eat == 0)
+	{
+		p_perror("Arguments must be positive integers\n");
+		return (0);
+	}
+	return (1);
+}
+
 int	main(int argc, char **argv)
 {
+	t_philosettings	g_settings;
+
 	if (checkargv(argc, argv) == 1)
 	{
-		printf("Arguments are correct\n");
+		if (setupsettings(&g_settings, argc, argv) == 1)
+		{
+			printf("no_philo: %d\n", g_settings.no_philo);
+			printf("time_to_die: %d\n", g_settings.time_to_die);
+			printf("time_to_eat: %d\n", g_settings.time_to_eat);
+			printf("time_to_sleep: %d\n", g_settings.time_to_sleep);
+			printf("no_must_eat: %d\n", g_settings.no_must_eat);
+		}
 	}
 	return (0);
 }
