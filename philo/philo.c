@@ -150,35 +150,22 @@ void *livingthelife(void *voidphilo)
 	while (1)
 	{
 		printstate(settings, philo->id, "is thinking");
-		while (1)
-		{	
-			usleep(500);
-			if (philosophers[left_fork].forkgone == 1)
-				continue;
-			pthread_mutex_lock(&philosophers[left_fork].forklock);
-			philosophers[left_fork].forkgone = 1;
-			if (philosophers[right_fork].forkgone == 1)
-			{
-				pthread_mutex_unlock(&philosophers[left_fork].forklock);
-				philosophers[left_fork].forkgone = 0;
-				continue;
-			}
-			pthread_mutex_lock(&philosophers[right_fork].forklock);
-			philosophers[right_fork].forkgone = 1;
-			printstate(settings, philo->id, "has taken a fork (mine)");
-			printstate(settings, philo->id, "has taken a fork (next)");
-			break;
-		}
+
+		printf("philo%d attempt to lock my fork\n", philo->id);
+		pthread_mutex_lock(&philosophers[left_fork].forklock);
+		printf("philo%d attempt to lock next fork\n", philo->id);
+		pthread_mutex_lock(&philosophers[right_fork].forklock);
+
+		printstate(settings, philo->id, "has taken a fork (mine)");
+		printstate(settings, philo->id, "has taken a fork (next)");
 
 		gettimeofday(&philo->last_meal, NULL);
 		printstate(settings, philo->id, "is eating");
 		usleep(settings->time_to_eat);
 
+		printstate(settings, philo->id, "is sleeping");
 		pthread_mutex_unlock(&philosophers[left_fork].forklock);
 		pthread_mutex_unlock(&philosophers[right_fork].forklock);
-		philosophers[left_fork].forkgone = 0;
-		philosophers[right_fork].forkgone = 0;
-		printstate(settings, philo->id, "is sleeping");
 
 		usleep(settings->time_to_sleep);
 	}
