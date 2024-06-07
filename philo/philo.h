@@ -22,22 +22,26 @@
 
 typedef struct	s_philosettings
 {
-	int				id;
 	int				no_philo;
 	int				time_to_die;
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				no_must_eat;
+	pthread_mutex_t	printlock;
 	struct timeval	start;
 }				t_philosettings;
 
+// state: 0 = thinking 1 = eating 2 = sleeping 3 = dead
 typedef struct	s_philosopher
 {
 	int				id;
-	pthread_t		thread;
 	t_philosettings	*settings;
+	pthread_t		thread;
 	struct timeval	last_meal;
-	int				no_eat;
+	int				no_times_eaten;
+	pthread_mutex_t forklock;
+	int				forkgone;
 }				t_philosopher;
+
 
 #endif

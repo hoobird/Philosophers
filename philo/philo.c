@@ -23,9 +23,9 @@ void *p_calloc(size_t nmemb, size_t size)
 	return (ptr);
 }
 
-int	p_strlen(char *str)
+int p_strlen(char *str)
 {
-	int	i;
+	int i;
 
 	i = 0;
 	if (str == NULL)
@@ -35,16 +35,17 @@ int	p_strlen(char *str)
 	return (i);
 }
 
-void	p_perror(char *str)
+int p_perror(char *str)
 {
 	write(2, "Error: ", 7);
 	write(2, str, p_strlen(str));
+	return (0);
 }
 
-int	checkargnumeric(int argc, char **argv)
+int checkargnumeric(int argc, char **argv)
 {
-	int	i;
-	int	j;
+	int i;
+	int j;
 
 	i = 1;
 	while (i < argc)
@@ -61,24 +62,22 @@ int	checkargnumeric(int argc, char **argv)
 	return (1);
 }
 
-int	checkargv(int argc, char **argv)
+int checkargv(int argc, char **argv)
 {
 	if (argc != 5 && argc != 6)
-		p_perror("Incorrect number of arguments (4 or 5)\n");
+		return (p_perror("Incorrect number of arguments (4 or 5)\n"));
 	else if (checkargnumeric(argc, argv) == 0)
-		p_perror("Arguments must be positive integers\n");	
-	else
-		return (1);
-	return (0);
+		return (p_perror("Arguments must be positive integers\n"));
+	return (1);
 }
 
-int	p_atoi(const char *nptr)
+int p_atoi(const char *nptr)
 {
-	char	*temp;
-	int		number;
+	char *temp;
+	int number;
 
 	number = 0;
-	temp = (char *) nptr;
+	temp = (char *)nptr;
 	while ((*temp >= 9 && *temp <= 13) || *temp == 32)
 		temp++;
 	while (*temp >= '0' && *temp <= '9')
@@ -86,55 +85,171 @@ int	p_atoi(const char *nptr)
 		number = number * 10 + (*temp - '0');
 		temp++;
 	}
-	printf("number: %d\n", number);
 	return (number);
 }
 
-int	setupsettings(t_philosettings *set, int argc, char **argv)
+int setupsettings(t_philosettings *set, int argc, char **argv)
 {
 	set->no_philo = p_atoi(argv[1]);
-	set->time_to_die = p_atoi(argv[2]);
-	set->time_to_eat = p_atoi(argv[3]);
-	set->time_to_sleep = p_atoi(argv[4]);
+	set->time_to_die = p_atoi(argv[2]) * 1000;
+	set->time_to_eat = p_atoi(argv[3]) * 1000;
+	set->time_to_sleep = p_atoi(argv[4]) * 1000;
 	if (argc == 6)
 		set->no_must_eat = p_atoi(argv[5]);
 	else
 		set->no_must_eat = -1;
-	if (set->no_philo == 0 || set->time_to_die == 0 || set->time_to_eat == 0
-		|| set->time_to_sleep == 0 || set->no_must_eat == 0)
+	if (set->no_philo == 0 || set->time_to_die == 0 || set->time_to_eat == 0 || set->time_to_sleep == 0 || set->no_must_eat == 0)
+		return (p_perror("Arguments must be positive integers\n"));
+	pthread_mutex_init(&set->printlock, NULL);
+	return (1);
+}
+
+int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
+{
+	int i;
+
+	*philosophers = p_calloc(set->no_philo + 1, sizeof(t_philosopher));
+	if (*philosophers == NULL)
+		return (p_perror("Failed to allocate memory for philosophers\n"));
+	i = 0;
+	while (i < set->no_philo)
 	{
-		p_perror("Arguments must be positive integers\n");
-		return (0);
+		(*philosophers)[i].id = i + 1;
+		(*philosophers)[i].no_times_eaten = 0;
+		(*philosophers)[i].last_meal = set->start;
+		pthread_mutex_init(&(*philosophers)[i].forklock, NULL);
+		(*philosophers)[i].settings = set;
+		(*philosophers)[i].forkgone = 0;
+		i++;
 	}
 	return (1);
 }
 
-int	main(int argc, char **argv)
+void printstate(t_philosettings *settings, int id, char *status)
 {
-	t_philosettings	g_settings;
+	struct timeval	now;
+	long			timepassed;
+
+	gettimeofday(&now, NULL);
+	pthread_mutex_lock(&settings->printlock);
+	timepassed = (now.tv_sec - settings->start.tv_sec) * 1000
+					+ (now.tv_usec - settings->start.tv_usec) / 1000;
+	printf("%ld %d %s\n", timepassed, id, status);
+	pthread_mutex_unlock(&settings->printlock);
+}
+
+void *livingthelife(void *voidphilo)
+{
+	t_philosopher *philo = (t_philosopher *)voidphilo;
+	t_philosettings *settings = philo->settings;
+	t_philosopher *philosophers = (t_philosopher *)(settings + 1);
+
+	int left_fork = philo->id - 1;
+	int right_fork = ((philo->id) % settings->no_philo);
+
+	while (1)
+	{
+		printstate(settings, philo->id, "is thinking");
+		while (1)
+		{	
+			usleep(500);
+			if (philosophers[left_fork].forkgone == 1)
+				continue;
+			pthread_mutex_lock(&philosophers[left_fork].forklock);
+			philosophers[left_fork].forkgone = 1;
+			if (philosophers[right_fork].forkgone == 1)
+			{
+				pthread_mutex_unlock(&philosophers[left_fork].forklock);
+				philosophers[left_fork].forkgone = 0;
+				continue;
+			}
+			pthread_mutex_lock(&philosophers[right_fork].forklock);
+			philosophers[right_fork].forkgone = 1;
+			printstate(settings, philo->id, "has taken a fork (mine)");
+			printstate(settings, philo->id, "has taken a fork (next)");
+			break;
+		}
+
+		gettimeofday(&philo->last_meal, NULL);
+		printstate(settings, philo->id, "is eating");
+		usleep(settings->time_to_eat);
+
+		pthread_mutex_unlock(&philosophers[left_fork].forklock);
+		pthread_mutex_unlock(&philosophers[right_fork].forklock);
+		philosophers[left_fork].forkgone = 0;
+		philosophers[right_fork].forkgone = 0;
+		printstate(settings, philo->id, "is sleeping");
+
+		usleep(settings->time_to_sleep);
+	}
+	return NULL;
+}
+
+void *monitordeath(void *voidphilo)
+{
+	struct timeval now;
+	t_philosopher *philosophers = (t_philosopher *)voidphilo;
+	t_philosettings *settings = philosophers->settings;
+
+	while (1)
+	{
+		for (int i = 0; i < settings->no_philo; i++)
+		{
+			gettimeofday(&now, NULL);
+			long elapsed_time = (now.tv_sec - philosophers[i].last_meal.tv_sec) * 1000
+								+ (now.tv_usec - philosophers[i].last_meal.tv_usec) / 1000;
+
+			if (elapsed_time > settings->time_to_die)
+			{
+				printstate(settings, philosophers[i].id, "died");
+				return NULL;
+			}
+		}
+		usleep(1000); // Check every 1 millisecond
+	}
+	return NULL;
+}
+
+void startsimulation(t_philosettings *set, t_philosopher *philosophers)
+{
+	int i;
+
+	gettimeofday(&set->start, NULL);
+	pthread_t deaththread;
+	i = 0;
+	while (i < set->no_philo)
+	{
+		pthread_create(&philosophers[i].thread, NULL, livingthelife, &philosophers[i]);
+		i++;
+	}
+	pthread_create(&deaththread, NULL, monitordeath, (void *)philosophers);
+	pthread_join(deaththread, NULL);
+	i = 0;
+	while (i < set->no_philo)
+	{
+		pthread_join(philosophers[i].thread, NULL);
+		i++;
+	}
+}
+
+int main(int argc, char **argv)
+{
+	t_philosettings g_settings;
+	t_philosopher *philosophers;
 
 	if (checkargv(argc, argv) == 1)
 	{
 		if (setupsettings(&g_settings, argc, argv) == 1)
 		{
-			printf("no_philo: %d\n", g_settings.no_philo);
-			printf("time_to_die: %d\n", g_settings.time_to_die);
-			printf("time_to_eat: %d\n", g_settings.time_to_eat);
-			printf("time_to_sleep: %d\n", g_settings.time_to_sleep);
-			printf("no_must_eat: %d\n", g_settings.no_must_eat);
+			if (createphilosophers(&g_settings, &philosophers) == 1)
+			{
+				printf("Number of philosophers: %d\n", g_settings.no_philo);
+				printf("Time to die: %d\n", g_settings.time_to_die);
+				printf("Time to eat: %d\n", g_settings.time_to_eat);
+				printf("Time to sleep: %d\n", g_settings.time_to_sleep);
+				startsimulation(&g_settings, philosophers);
+			}
 		}
 	}
 	return (0);
 }
-
-// int	main(int argc, char **argv)
-// {
-// 	struct timeval	time;
-	
-// 	(void)argc;
-// 	(void)argv;
-// 	gettimeofday(&time, NULL);
-// 	printf("sec:  %ld\n", time.tv_sec);
-// 	printf("usec: %ld\n", time.tv_usec);
-// 	return (0);	
-// }
