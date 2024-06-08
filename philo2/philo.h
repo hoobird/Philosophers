@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:59:12 by hulim             #+#    #+#             */
-/*   Updated: 2024/06/08 21:50:34 by hulim            ###   ########.fr       */
+/*   Updated: 2024/06/08 21:56:35 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@ struct	s_philosettings
 	int				time_to_sleep;
 	int				no_must_eat;
 	int				gameover;
+	int				forksavailable;
+	pthread_mutex_t forklock;
 	pthread_mutex_t printlock;
 	struct timeval	start;
 };
@@ -42,8 +44,7 @@ struct	s_philosopher
 	pthread_t		lifethread;
 	struct timeval	last_meal;
 	int				no_times_eaten;
-	pthread_mutex_t forklock;
-	int				forkgone;
+	int				holdingforks;
 	t_philosopher	*next;
 };
 

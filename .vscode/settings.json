@@ -2,6 +2,7 @@
     "files.associations": {
         "*.embeddedhtml": "html",
         "time.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "pthread.h": "c"
     }
 }

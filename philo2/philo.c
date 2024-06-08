@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/06/08 20:45:57 by hulim            ###   ########.fr       */
+/*   Updated: 2024/06/08 22:00:38 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,8 @@ int setupsettings(t_philosettings *set, int argc, char **argv)
 	if (set->no_philo == 0 || set->time_to_die == 0 || set->time_to_eat == 0 || set->time_to_sleep == 0 || set->no_must_eat == 0)
 		return (p_perror("Arguments must be positive integers\n"));
 	pthread_mutex_init(&set->printlock, NULL);
+	pthread_mutex_init(&set->forklock, NULL);
+	set->forksavailable = set->no_philo;
 	set->gameover = 0;
 	gettimeofday(&set->start, NULL);
 	return (1);
@@ -119,9 +121,8 @@ int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 		(*philosophers)[i].id = i + 1;
 		(*philosophers)[i].no_times_eaten = 0;
 		(*philosophers)[i].last_meal = set->start;
-		pthread_mutex_init(&(*philosophers)[i].forklock, NULL);
 		(*philosophers)[i].settings = set;
-		(*philosophers)[i].forkgone = 0;
+		(*philosophers)[i].holdingforks = 0;
 		(*philosophers)[i].next = &(*philosophers)[(i + 1) % set->no_philo];
 		i++;
 	}
@@ -152,19 +153,30 @@ void *livingthelife(void *voidphilo)
 		usleep(100);
 	while (settings->gameover == 0)
 	{	
-		pthread_mutex_lock(&philo->forklock);
-		pthread_mutex_lock(&philo->next->forklock);
+		while (1)
+		{
+			pthread_mutex_lock(&settings->forklock);
+			if (settings->forksavailable > 1)
+			{
+				settings->forksavailable -= 2;
+				pthread_mutex_unlock(&settings->forklock);
+				break ;
+			}
+			pthread_mutex_unlock(&settings->forklock);
+		}
 		printstate(settings, philo->id, "has taken a fork");
 		printstate(settings, philo->id, "has taken a fork");
-
 		gettimeofday(&philo->last_meal, NULL);
 		printstate(settings, philo->id, "is eating");
 		philo->no_times_eaten++;
 		usleep(settings->time_to_eat * 1000);
+		
+		pthread_mutex_lock(&settings->forklock);
+		settings->forksavailable += 2;
+		pthread_mutex_unlock(&settings->forklock);
 
 		printstate(settings, philo->id, "is sleeping");
-		pthread_mutex_unlock(&philo->forklock);
-		pthread_mutex_unlock(&philo->next->forklock);
+
 		usleep(settings->time_to_sleep * 1000);
 		
 		printstate(settings, philo->id, "is thinking");
@@ -237,11 +249,7 @@ void	cleanphilos(t_philosettings *set, t_philosopher *philosophers)
 	int i;
 
 	i = 0;
-	while (i < set->no_philo)
-	{
-		pthread_mutex_destroy(&philosophers[i].forklock);
-		i++;
-	}
+	pthread_mutex_destroy(&set->forklock);
 	pthread_mutex_destroy(&set->printlock);
 	free(philosophers);
 }
