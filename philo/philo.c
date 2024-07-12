@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 03:09:38 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 03:42:02 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,19 +122,30 @@ int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 		pthread_mutex_init(&(*philosophers)[i].forklock, NULL);
 		(*philosophers)[i].settings = set;
 		(*philosophers)[i].next = &(*philosophers)[(i + 1) % set->no_philo];
-		if (i % 2 == 0)
-		{
-			(*philosophers)[i].first = &(*philosophers)[i].forklock;
-			(*philosophers)[i].second = &(*philosophers)[(i + 1) % set->no_philo].forklock;
-		}
-		else
-		{
-			(*philosophers)[i].first = &(*philosophers)[(i - 1) % set->no_philo].forklock;
-			(*philosophers)[i].second = &(*philosophers)[i].forklock;
-		}
 		i++;
 	}
+	decideforks(set, philosophers);
 	return (1);
+}
+
+void	decideforks(t_philosettings *set, t_philosopher **philosophers)
+{
+	int	i;
+
+	i=0;
+	while (i < set->no_philo)
+	{
+		(*philosophers)[i].first = &(*philosophers)[i].forklock;
+		(*philosophers)[i].second = &(*philosophers)[i+1].forklock;
+		(*philosophers)[i].next->first = &(*philosophers)[i].forklock;
+		(*philosophers)[i].next->second = &(*philosophers)[i+1].forklock;
+		i+=2;
+	}
+	if (i % 2 == 1)
+	{
+		(*philosophers)[set->no_philo - 1].first = &(*philosophers)[set->no_philo - 1].forklock;
+		(*philosophers)[set->no_philo - 1].second = &(*philosophers)[0].forklock;
+	}
 }
 
 void printstate(t_philosettings *settings, int id, char *status)
