@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 03:42:02 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 03:43:25 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,6 +106,26 @@ int setupsettings(t_philosettings *set, int argc, char **argv)
 	return (1);
 }
 
+void	decideforks(t_philosettings *set, t_philosopher **philosophers)
+{
+	int	i;
+
+	i=0;
+	while (i < set->no_philo)
+	{
+		(*philosophers)[i].first = &(*philosophers)[i].forklock;
+		(*philosophers)[i].second = &(*philosophers)[i+1].forklock;
+		(*philosophers)[i].next->first = &(*philosophers)[i].forklock;
+		(*philosophers)[i].next->second = &(*philosophers)[i+1].forklock;
+		i+=2;
+	}
+	if (i % 2 == 1)
+	{
+		(*philosophers)[set->no_philo - 1].first = &(*philosophers)[set->no_philo - 1].forklock;
+		(*philosophers)[set->no_philo - 1].second = &(*philosophers)[0].forklock;
+	}
+}
+
 int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 {
 	int i;
@@ -126,26 +146,6 @@ int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 	}
 	decideforks(set, philosophers);
 	return (1);
-}
-
-void	decideforks(t_philosettings *set, t_philosopher **philosophers)
-{
-	int	i;
-
-	i=0;
-	while (i < set->no_philo)
-	{
-		(*philosophers)[i].first = &(*philosophers)[i].forklock;
-		(*philosophers)[i].second = &(*philosophers)[i+1].forklock;
-		(*philosophers)[i].next->first = &(*philosophers)[i].forklock;
-		(*philosophers)[i].next->second = &(*philosophers)[i+1].forklock;
-		i+=2;
-	}
-	if (i % 2 == 1)
-	{
-		(*philosophers)[set->no_philo - 1].first = &(*philosophers)[set->no_philo - 1].forklock;
-		(*philosophers)[set->no_philo - 1].second = &(*philosophers)[0].forklock;
-	}
 }
 
 void printstate(t_philosettings *settings, int id, char *status)
