@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hulim <hulim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/06/08 20:45:57 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 03:03:23 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,8 +121,17 @@ int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 		(*philosophers)[i].last_meal = set->start;
 		pthread_mutex_init(&(*philosophers)[i].forklock, NULL);
 		(*philosophers)[i].settings = set;
-		(*philosophers)[i].forkgone = 0;
 		(*philosophers)[i].next = &(*philosophers)[(i + 1) % set->no_philo];
+		if (i % 2 == 0)
+		{
+			(*philosophers)[i].first = &(*philosophers)[i].forklock;
+			(*philosophers)[i].second = &(*philosophers)[(i + 1) % set->no_philo].forklock;
+		}
+		else
+		{
+			(*philosophers)[i].first = &(*philosophers)[(i + 1) % set->no_philo].forklock;
+			(*philosophers)[i].second = &(*philosophers)[i].forklock;
+		}
 		i++;
 	}
 	return (1);
@@ -148,12 +157,10 @@ void *livingthelife(void *voidphilo)
 	t_philosopher *philo = (t_philosopher *)voidphilo;
 	t_philosettings *settings = philo->settings;
 
-	if (philo->id % 2 == 0)
-		usleep(100);
 	while (settings->gameover == 0)
 	{	
-		pthread_mutex_lock(&philo->forklock);
-		pthread_mutex_lock(&philo->next->forklock);
+		pthread_mutex_lock(*(&philo->first));
+		pthread_mutex_lock(*(&philo->second));
 		printstate(settings, philo->id, "has taken a fork");
 		printstate(settings, philo->id, "has taken a fork");
 

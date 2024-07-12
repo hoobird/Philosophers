@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hulim <hulim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:59:12 by hulim             #+#    #+#             */
-/*   Updated: 2024/06/08 21:50:34 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 02:56:11 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,8 @@ struct	s_philosopher
 	struct timeval	last_meal;
 	int				no_times_eaten;
 	pthread_mutex_t forklock;
-	int				forkgone;
+	pthread_mutex_t *first;
+	pthread_mutex_t *second;
 	t_philosopher	*next;
 };
 
