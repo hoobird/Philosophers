@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 03:59:26 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 04:03:08 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,9 +171,9 @@ void *livingthelife(void *voidphilo)
 	while (settings->gameover == 0)
 	{	
 		pthread_mutex_lock(*(&philo->first));
+		printstate(settings, philo->id, "has taken a 1fork");
 		pthread_mutex_lock(*(&philo->second));
-		printstate(settings, philo->id, "has taken a fork");
-		printstate(settings, philo->id, "has taken a fork");
+		printstate(settings, philo->id, "has taken a 2fork");
 
 		gettimeofday(&philo->last_meal, NULL);
 		printstate(settings, philo->id, "is eating");
