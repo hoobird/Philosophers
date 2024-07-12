@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 03:43:25 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 03:59:26 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,7 +111,7 @@ void	decideforks(t_philosettings *set, t_philosopher **philosophers)
 	int	i;
 
 	i=0;
-	while (i < set->no_philo)
+	while (i < set->no_philo - 1)
 	{
 		(*philosophers)[i].first = &(*philosophers)[i].forklock;
 		(*philosophers)[i].second = &(*philosophers)[i+1].forklock;
@@ -119,10 +119,10 @@ void	decideforks(t_philosettings *set, t_philosopher **philosophers)
 		(*philosophers)[i].next->second = &(*philosophers)[i+1].forklock;
 		i+=2;
 	}
-	if (i % 2 == 1)
+	if (set->no_philo % 2 == 1)
 	{
-		(*philosophers)[set->no_philo - 1].first = &(*philosophers)[set->no_philo - 1].forklock;
-		(*philosophers)[set->no_philo - 1].second = &(*philosophers)[0].forklock;
+		(*philosophers)[set->no_philo - 1].first = &(*philosophers)[0].forklock;
+		(*philosophers)[set->no_philo - 1].second = &(*philosophers)[set->no_philo - 1].forklock;
 	}
 }
 
@@ -279,6 +279,13 @@ int main(int argc, char **argv)
 				// printf("Time to die: %d\n", g_settings.time_to_die);
 				// printf("Time to eat: %d\n", g_settings.time_to_eat);
 				// printf("Time to sleep: %d\n", g_settings.time_to_sleep);
+				int i = 0;
+				while (i < g_settings.no_philo)
+				{
+					// print the first and second fork of each philosopher
+					printf("Philosopher %d: %p %p\n", i, philosophers[i].first, philosophers[i].second);
+					i++;
+				}
 				startsimulation(&g_settings, philosophers);
 				cleanphilos(&g_settings, philosophers);
 			}
