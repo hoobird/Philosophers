@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 03:03:23 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 03:09:38 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,7 @@ int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 		}
 		else
 		{
-			(*philosophers)[i].first = &(*philosophers)[(i + 1) % set->no_philo].forklock;
+			(*philosophers)[i].first = &(*philosophers)[(i - 1) % set->no_philo].forklock;
 			(*philosophers)[i].second = &(*philosophers)[i].forklock;
 		}
 		i++;
