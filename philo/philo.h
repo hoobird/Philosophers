@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:59:12 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 02:56:11 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 22:44:14 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,9 @@ struct	s_philosopher
 	int				id;
 	t_philosettings	*settings;
 	pthread_t		lifethread;
+	pthread_mutex_t	last_meal_lock;
 	struct timeval	last_meal;
+	pthread_mutex_t	no_times_eaten_lock;
 	int				no_times_eaten;
 	pthread_mutex_t forklock;
 	pthread_mutex_t *first;

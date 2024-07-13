@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:58:24 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/13 04:08:01 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/13 22:48:02 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,6 +140,7 @@ int createphilosophers(t_philosettings *set, t_philosopher **philosophers)
 		(*philosophers)[i].no_times_eaten = 0;
 		(*philosophers)[i].last_meal = set->start;
 		pthread_mutex_init(&(*philosophers)[i].forklock, NULL);
+		pthread_mutex_init(&(*philosophers)[i].last_meal_lock, NULL);
 		(*philosophers)[i].settings = set;
 		(*philosophers)[i].next = &(*philosophers)[(i + 1) % set->no_philo];
 		i++;
@@ -175,14 +176,18 @@ void *livingthelife(void *voidphilo)
 		pthread_mutex_lock(*(&philo->second));
 		printstate(settings, philo->id, "has taken a fork");
 
+		pthread_mutex_lock(&philo->last_meal_lock);
 		gettimeofday(&philo->last_meal, NULL);
+		pthread_mutex_unlock(&philo->last_meal_lock);
 		printstate(settings, philo->id, "is eating");
+		pthread_mutex_lock(&philo->no_times_eaten_lock);
 		philo->no_times_eaten++;
+		pthread_mutex_unlock(&philo->no_times_eaten_lock);
 		usleep(settings->time_to_eat * 1000);
 
 		printstate(settings, philo->id, "is sleeping");
-		pthread_mutex_unlock(&philo->forklock);
-		pthread_mutex_unlock(&philo->next->forklock);
+		pthread_mutex_unlock(*(&philo->first));
+		pthread_mutex_unlock(*(&philo->second));
 		usleep(settings->time_to_sleep * 1000);
 		
 		printstate(settings, philo->id, "is thinking");
@@ -207,17 +212,21 @@ void *monitorgameover(void *voidphilo)
 		whoeaten = 0;
 		while (i < settings->no_philo)
 		{
+			pthread_mutex_lock(&philosophers[i].last_meal_lock);
 			gettimeofday(&now, NULL);
 			timepassed = (now.tv_sec - philosophers[i].last_meal.tv_sec) * 1000
 							+ (now.tv_usec - philosophers[i].last_meal.tv_usec) / 1000;
+			pthread_mutex_unlock(&philosophers[i].last_meal_lock);
 			if (timepassed > settings->time_to_die)
 			{
 				printstate(settings, philosophers[i].id, "died");
 				settings->gameover = 1;
 				return (NULL);
 			}
+			pthread_mutex_lock(&philosophers[i].no_times_eaten_lock);
 			if (settings->no_must_eat != -1 && philosophers[i].no_times_eaten >= settings->no_must_eat)
 				whoeaten++;
+			pthread_mutex_unlock(&philosophers[i].no_times_eaten_lock);
 			i++;
 		}
 		if (whoeaten == settings->no_philo)
@@ -258,6 +267,8 @@ void	cleanphilos(t_philosettings *set, t_philosopher *philosophers)
 	while (i < set->no_philo)
 	{
 		pthread_mutex_destroy(&philosophers[i].forklock);
+		pthread_mutex_destroy(&philosophers[i].last_meal_lock);
+		pthread_mutex_destroy(&philosophers[i].no_times_eaten_lock);
 		i++;
 	}
 	pthread_mutex_destroy(&set->printlock);
