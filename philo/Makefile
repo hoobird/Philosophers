@@ -1,6 +1,6 @@
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -g
-SRCS = philo.c
+SRCS = philo.c monitor.c setup.c task.c tools.c
 OBJS = $(SRCS:.c=.o)
 NAME = philo
 
