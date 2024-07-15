@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/14 19:44:00 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/14 20:11:20 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/15 21:50:45 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,21 +62,22 @@ int	setupsettings(t_philosettings *set, int argc, char **argv)
 
 void	decideforks(t_philosettings *set, t_philosopher **philosophers)
 {
-	int	i;
+	int				i;
+	pthread_mutex_t	*temp;
 
 	i = 0;
-	while (i < set->no_philo - 1)
+	while (i < set->no_philo)
 	{
 		(*philosophers)[i].first = &(*philosophers)[i].forklock;
-		(*philosophers)[i].second = &(*philosophers)[i + 1].forklock;
-		(*philosophers)[i].next->first = &(*philosophers)[i].forklock;
-		(*philosophers)[i].next->second = &(*philosophers)[i + 1].forklock;
-		i += 2;
+		(*philosophers)[i].second = &(*philosophers)[i].next->forklock;
+		i += 1;
 	}
-	if (set->no_philo % 2 == 1)
+	i = 0;
+	while (i < set->no_philo)
 	{
-		(*philosophers)[set->no_philo - 1].second = &(*philosophers)[0].forklock;
-		(*philosophers)[set->no_philo
-			- 1].first = &(*philosophers)[set->no_philo - 1].forklock;
+		temp = (*philosophers)[i].first;
+		(*philosophers)[i].first = (*philosophers)[i].second;
+		(*philosophers)[i].second = temp;
+		i += 2;
 	}
 }
