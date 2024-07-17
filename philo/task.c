@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/14 19:47:32 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/14 19:51:44 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/17 20:25:47 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ void	printstate(t_philosettings *settings, int id, char *status)
 	struct timeval	now;
 	long			timepassed;
 
-	if (settings->gameover == 1)
+	if (getgameover(settings) == 1)
 		return ;
 	gettimeofday(&now, NULL);
 	pthread_mutex_lock(&settings->printlock);
@@ -41,28 +41,28 @@ void	updatetimeseaten(t_philosopher *philo, t_philosettings *settings)
 void	*livingthelife(void *voidphilo)
 {
 	t_philosopher	*philo;
-	t_philosettings	*settings;
 
 	philo = (t_philosopher *)voidphilo;
-	settings = philo->settings;
-	while (settings->gameover == 0)
+	if (philo->id % 2 == 1)
+		usleep(10000);
+	while (getgameover(philo->settings) == 0)
 	{
 		pthread_mutex_lock(*(&philo->first));
-		printstate(settings, philo->id, "has taken a fork");
+		printstate(philo->settings, philo->id, "has taken a fork");
 		if (philo->first == philo->second)
 		{
 			pthread_mutex_unlock(*(&philo->first));
 			return (NULL);
 		}
 		pthread_mutex_lock(*(&philo->second));
-		printstate(settings, philo->id, "has taken a fork");
-		updatetimeseaten(philo, settings);
-		usleep(settings->time_to_eat * 1000);
-		printstate(settings, philo->id, "is sleeping");
+		printstate(philo->settings, philo->id, "has taken a fork");
+		updatetimeseaten(philo, philo->settings);
+		usleep(philo->settings->time_to_eat * 1000);
+		printstate(philo->settings, philo->id, "is sleeping");
 		pthread_mutex_unlock(*(&philo->first));
 		pthread_mutex_unlock(*(&philo->second));
-		usleep(settings->time_to_sleep * 1000);
-		printstate(settings, philo->id, "is thinking");
+		usleep(philo->settings->time_to_sleep * 1000);
+		printstate(philo->settings, philo->id, "is thinking");
 	}
 	return (NULL);
 }

@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/14 19:44:00 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/15 21:50:45 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/17 20:22:02 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,7 @@ int	setupsettings(t_philosettings *set, int argc, char **argv)
 		|| set->time_to_sleep == 0 || set->no_must_eat == 0)
 		return (p_perror("Arguments must be positive integers\n"));
 	pthread_mutex_init(&set->printlock, NULL);
+	pthread_mutex_init(&set->gameoverlock, NULL);
 	set->gameover = 0;
 	gettimeofday(&set->start, NULL);
 	return (1);
@@ -62,22 +63,18 @@ int	setupsettings(t_philosettings *set, int argc, char **argv)
 
 void	decideforks(t_philosettings *set, t_philosopher **philosophers)
 {
-	int				i;
-	pthread_mutex_t	*temp;
+	int	i;
 
 	i = 0;
 	while (i < set->no_philo)
 	{
 		(*philosophers)[i].first = &(*philosophers)[i].forklock;
-		(*philosophers)[i].second = &(*philosophers)[i].next->forklock;
+		(*philosophers)[i].second = &(*philosophers)[i + 1].forklock;
+		if (i == set->no_philo - 1)
+		{
+			(*philosophers)[i].first = &(*philosophers)[i].forklock;
+			(*philosophers)[i].second = &(*philosophers)[0].forklock;
+		}
 		i += 1;
-	}
-	i = 0;
-	while (i < set->no_philo)
-	{
-		temp = (*philosophers)[i].first;
-		(*philosophers)[i].first = (*philosophers)[i].second;
-		(*philosophers)[i].second = temp;
-		i += 2;
 	}
 }

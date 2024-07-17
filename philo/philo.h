@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/03 13:59:12 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/14 20:13:23 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/17 20:27:56 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ struct s_philosettings
 	int				time_to_sleep;
 	int				no_must_eat;
 	int				gameover;
+	pthread_mutex_t	gameoverlock;
 	pthread_mutex_t	printlock;
 	struct timeval	start;
 };
@@ -76,7 +77,8 @@ void	printstate(t_philosettings *settings, int id, char *status);
 long	gettimepassed(t_philosopher *philosopher);
 void	countwhoeaten(t_philosopher *philosopher, t_philosettings *settings,
 			int *whoeaten);
-void	*gameover(t_philosettings	*settings);
+void	*setgameover(t_philosettings	*settings);
+int		getgameover(t_philosettings *settings);
 void	*monitorgameover(void *voidphilo);
 
 #endif

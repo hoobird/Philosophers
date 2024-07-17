@@ -6,7 +6,7 @@
 /*   By: hulim <hulim@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/14 19:51:28 by hulim             #+#    #+#             */
-/*   Updated: 2024/07/14 20:09:17 by hulim            ###   ########.fr       */
+/*   Updated: 2024/07/17 20:27:56 by hulim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,10 +37,22 @@ void	countwhoeaten(t_philosopher *philosopher, t_philosettings *settings,
 	pthread_mutex_unlock(&philosopher->no_times_eaten_lock);
 }
 
-void	*gameover(t_philosettings *settings)
+void	*setgameover(t_philosettings *settings)
 {
+	pthread_mutex_lock(&settings->gameoverlock);
 	settings->gameover = 1;
+	pthread_mutex_unlock(&settings->gameoverlock);
 	return (NULL);
+}
+
+int	getgameover(t_philosettings *settings)
+{
+	int value;
+
+	pthread_mutex_lock(&settings->gameoverlock);
+	value = settings->gameover;
+	pthread_mutex_unlock(&settings->gameoverlock);
+	return (value);
 }
 
 void	*monitorgameover(void *voidphilo)
@@ -63,11 +75,11 @@ void	*monitorgameover(void *voidphilo)
 			if (timepassed > settings->time_to_die)
 			{
 				printstate(settings, philosophers[i].id, "died");
-				return (gameover(settings));
+				return (setgameover(settings));
 			}
 			countwhoeaten(&philosophers[i++], settings, &whoeaten);
 		}
 		if (whoeaten == settings->no_philo)
-			return (gameover(settings));
+			return (setgameover(settings));
 	}
 }
